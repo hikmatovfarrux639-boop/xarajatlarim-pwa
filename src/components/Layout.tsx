@@ -34,8 +34,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
               <Receipt size={17} />
             </div>
             <div>
-              <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white block leading-none">
-                Xarajatlarim
+              <span className="text-base font-black tracking-tight text-slate-900 dark:text-white block leading-none">
+                Spendo
               </span>
               <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
                 <ShieldCheck size={11} /> Doimiy xotira yoqilgan

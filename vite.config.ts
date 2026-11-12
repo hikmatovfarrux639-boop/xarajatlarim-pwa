@@ -12,8 +12,8 @@ export default defineConfig({
       },
       includeAssets: ['wallet.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
-        name: 'Xarajatlarim — Kunlik Hisob va Eslatmalar',
-        short_name: 'Xarajatlarim',
+        name: 'Spendo — Kunlik Xarajatlar va Eslatmalar',
+        short_name: 'Spendo',
         description: 'Kunlik nima olayotganingiz, qancha xarajat qilayotganingiz va to\'lov vaqtlarini hisoblab boruvchi ilova',
         theme_color: '#0f172a',
         background_color: '#0f172a',

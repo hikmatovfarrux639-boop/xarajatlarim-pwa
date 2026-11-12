@@ -65,7 +65,7 @@ export const RemindersPage: React.FC = () => {
     const res = await Notification.requestPermission();
     setNotifPermission(res);
     if (res === 'granted') {
-      new Notification('Hamyon — Eslatmalar yoqildi! 🔔', {
+      new Notification('Spendo — Eslatmalar yoqildi! 🔔', {
         body: "To'lov vaqti yaqinlashganda sizga eslatma yuboramiz.",
       });
     }
