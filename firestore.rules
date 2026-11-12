@@ -1,0 +1,292 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: /users/{userId}
+    // Document ID: {userId} (Firebase Auth UID)
+    // Fields:
+    //   - uid: string (optional, must match {userId}, immutable)
+    //   - email: string (optional, max 150 chars)
+    //   - displayName: string (optional, max 100 chars)
+    //   - photoURL: string (optional, max 500 chars)
+    //   - createdAt: number | timestamp (optional, immutable)
+    //   - updatedAt: number | timestamp (optional)
+    //
+    // Collection: /users/{userId}/wallets/{walletId}
+    // Document ID: {walletId} (e.g. 'wallet_cash', 'wallet_card', 'wallet_usd')
+    // Fields:
+    //   - id: string (optional, max 64 chars, immutable)
+    //   - name: string (required, 1-100 chars)
+    //   - currency: string (required, 'UZS' | 'USD')
+    //   - balance: number (required)
+    //   - color: string (required, 1-30 chars)
+    //   - icon: string (required, 1-50 chars)
+    //   - isDefault: bool (optional)
+    //   - createdAt: number | timestamp (optional, immutable)
+    //
+    // Collection: /users/{userId}/categories/{categoryId}
+    // Document ID: {categoryId} (e.g. 'cat_food', 'cat_transport', 'cat_salary')
+    // Fields:
+    //   - id: string (optional, max 64 chars, immutable)
+    //   - name: string (required, 1-100 chars)
+    //   - type: string (required, 'expense' | 'income')
+    //   - icon: string (required, 1-50 chars)
+    //   - color: string (required, 1-30 chars)
+    //   - isCustom: bool (optional)
+    //   - createdAt: number | timestamp (optional, immutable)
+    //
+    // Collection: /users/{userId}/transactions/{transactionId}
+    // Document ID: {transactionId} (e.g. 'tx_1700000000_abcd')
+    // Fields:
+    //   - id: string (optional, max 64 chars, immutable)
+    //   - type: string (required, 'expense' | 'income')
+    //   - amount: number (required, > 0)
+    //   - currency: string (required, 'UZS' | 'USD')
+    //   - walletId: string (required, 1-64 chars)
+    //   - categoryId: string (required, 1-64 chars)
+    //   - title: string (required, 1-200 chars)
+    //   - note: string (optional, max 1000 chars)
+    //   - items: list (optional, max 100 items)
+    //   - date: string | timestamp (optional, ISO string max 50 chars or timestamp)
+    //   - createdAt: number | timestamp (optional, immutable)
+    //
+    // Collection: /users/{userId}/settings/{settingId}
+    // Document ID: {settingId} (e.g. 'general' or 'default')
+    // Fields:
+    //   - exchangeRateUsdToUzs: number (optional, > 0)
+    //   - theme: string (optional, 'dark' | 'light' | 'system')
+    //   - primaryCurrency: string (optional, 'UZS' | 'USD')
+    //   - monthlyBudgetLimit: number (optional, >= 0)
+    //   - userName: string (optional, max 100 chars)
+    //   - cloudSyncEnabled: bool (optional)
+    //   - firebaseConfig: map (optional, allowed keys: apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId)
+    //   - updatedAt: number | timestamp (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Core Helper Functions
+    // ===============================================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Strict ownership verification: authenticated user's UID must match target userId
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Verify immutable field remains unchanged on update
+    function isImmutableUnchanged(field) {
+      return !(field in resource.data) ||
+             ((field in request.resource.data) && request.resource.data[field] == resource.data[field]);
+    }
+
+    // ===============================================================
+    // Domain Validators (Enforced in BOTH create and update)
+    // ===============================================================
+
+    // Validate User document (/users/{userId})
+    function isValidUser(data, userId) {
+      let hasOnlyValidKeys = data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'createdAt', 'updatedAt']);
+
+      let validUid = !('uid' in data) || (data.uid == userId);
+      let validEmail = !('email' in data) || (data.email is string && data.email.size() <= 150);
+      let validDisplayName = !('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100);
+      let validPhotoURL = !('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500);
+      let validCreatedAt = !('createdAt' in data) || (data.createdAt is number) || (data.createdAt is timestamp);
+      let validUpdatedAt = !('updatedAt' in data) || (data.updatedAt is number) || (data.updatedAt is timestamp);
+
+      return hasOnlyValidKeys &&
+             validUid &&
+             validEmail &&
+             validDisplayName &&
+             validPhotoURL &&
+             validCreatedAt &&
+             validUpdatedAt;
+    }
+
+    // Validate Wallet document (/users/{userId}/wallets/{walletId})
+    function isValidWallet(data) {
+      let hasRequired = data.keys().hasAll(['name', 'currency', 'balance', 'color', 'icon']);
+      let hasOnlyValidKeys = data.keys().hasOnly(['id', 'name', 'currency', 'balance', 'color', 'icon', 'isDefault', 'createdAt']);
+
+      let validName = ('name' in data) && (data.name is string) && data.name.size() > 0 && data.name.size() <= 100;
+      let validCurrency = ('currency' in data) && (data.currency in ['UZS', 'USD']);
+      let validBalance = ('balance' in data) && (data.balance is number);
+      let validColor = ('color' in data) && (data.color is string) && data.color.size() > 0 && data.color.size() <= 30;
+      let validIcon = ('icon' in data) && (data.icon is string) && data.icon.size() > 0 && data.icon.size() <= 50;
+
+      let validOptionalId = !('id' in data) || (data.id is string && data.id.size() > 0 && data.id.size() <= 64);
+      let validOptionalDefault = !('isDefault' in data) || (data.isDefault is bool);
+      let validOptionalCreatedAt = !('createdAt' in data) || (data.createdAt is number) || (data.createdAt is timestamp);
+
+      return hasRequired &&
+             hasOnlyValidKeys &&
+             validName &&
+             validCurrency &&
+             validBalance &&
+             validColor &&
+             validIcon &&
+             validOptionalId &&
+             validOptionalDefault &&
+             validOptionalCreatedAt;
+    }
+
+    // Validate Category document (/users/{userId}/categories/{categoryId})
+    function isValidCategory(data) {
+      let hasRequired = data.keys().hasAll(['name', 'type', 'icon', 'color']);
+      let hasOnlyValidKeys = data.keys().hasOnly(['id', 'name', 'type', 'icon', 'color', 'isCustom', 'createdAt']);
+
+      let validName = ('name' in data) && (data.name is string) && data.name.size() > 0 && data.name.size() <= 100;
+      let validType = ('type' in data) && (data.type in ['expense', 'income']);
+      let validIcon = ('icon' in data) && (data.icon is string) && data.icon.size() > 0 && data.icon.size() <= 50;
+      let validColor = ('color' in data) && (data.color is string) && data.color.size() > 0 && data.color.size() <= 30;
+
+      let validOptionalId = !('id' in data) || (data.id is string && data.id.size() > 0 && data.id.size() <= 64);
+      let validOptionalCustom = !('isCustom' in data) || (data.isCustom is bool);
+      let validOptionalCreatedAt = !('createdAt' in data) || (data.createdAt is number) || (data.createdAt is timestamp);
+
+      return hasRequired &&
+             hasOnlyValidKeys &&
+             validName &&
+             validType &&
+             validIcon &&
+             validColor &&
+             validOptionalId &&
+             validOptionalCustom &&
+             validOptionalCreatedAt;
+    }
+
+    // Validate Transaction document (/users/{userId}/transactions/{transactionId})
+    function isValidTransaction(data) {
+      let hasRequired = data.keys().hasAll(['type', 'amount', 'currency', 'walletId', 'categoryId', 'title']);
+      let hasOnlyValidKeys = data.keys().hasOnly(['id', 'type', 'amount', 'currency', 'walletId', 'categoryId', 'title', 'note', 'items', 'date', 'createdAt']);
+
+      let validType = ('type' in data) && (data.type in ['expense', 'income']);
+      let validAmount = ('amount' in data) && (data.amount is number) && data.amount > 0;
+      let validCurrency = ('currency' in data) && (data.currency in ['UZS', 'USD']);
+      let validWalletId = ('walletId' in data) && (data.walletId is string) && data.walletId.size() > 0 && data.walletId.size() <= 64;
+      let validCategoryId = ('categoryId' in data) && (data.categoryId is string) && data.categoryId.size() > 0 && data.categoryId.size() <= 64;
+      let validTitle = ('title' in data) && (data.title is string) && data.title.size() > 0 && data.title.size() <= 200;
+
+      let validOptionalId = !('id' in data) || (data.id is string && data.id.size() > 0 && data.id.size() <= 64);
+      let validOptionalNote = !('note' in data) || (data.note is string && data.note.size() <= 1000);
+      let validOptionalItems = !('items' in data) || (data.items is list && data.items.size() <= 100);
+      let validOptionalDate = !('date' in data) || (data.date is string && data.date.size() > 0 && data.date.size() <= 50) || (data.date is timestamp);
+      let validOptionalCreatedAt = !('createdAt' in data) || (data.createdAt is number) || (data.createdAt is timestamp);
+
+      return hasRequired &&
+             hasOnlyValidKeys &&
+             validType &&
+             validAmount &&
+             validCurrency &&
+             validWalletId &&
+             validCategoryId &&
+             validTitle &&
+             validOptionalId &&
+             validOptionalNote &&
+             validOptionalItems &&
+             validOptionalDate &&
+             validOptionalCreatedAt;
+    }
+
+    // Validate Settings document (/users/{userId}/settings/{settingId})
+    function isValidSettings(data) {
+      let hasOnlyValidKeys = data.keys().hasOnly([
+        'exchangeRateUsdToUzs',
+        'theme',
+        'primaryCurrency',
+        'monthlyBudgetLimit',
+        'userName',
+        'cloudSyncEnabled',
+        'firebaseConfig',
+        'updatedAt'
+      ]);
+
+      let validRate = !('exchangeRateUsdToUzs' in data) || (data.exchangeRateUsdToUzs is number && data.exchangeRateUsdToUzs > 0);
+      let validTheme = !('theme' in data) || (data.theme in ['dark', 'light', 'system']);
+      let validCurrency = !('primaryCurrency' in data) || (data.primaryCurrency in ['UZS', 'USD']);
+      let validBudget = !('monthlyBudgetLimit' in data) || (data.monthlyBudgetLimit is number && data.monthlyBudgetLimit >= 0);
+      let validUserName = !('userName' in data) || (data.userName is string && data.userName.size() <= 100);
+      let validCloudSync = !('cloudSyncEnabled' in data) || (data.cloudSyncEnabled is bool);
+      let validFirebaseConfig = !('firebaseConfig' in data) || (data.firebaseConfig is map && data.firebaseConfig.keys().hasOnly(['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId']));
+      let validUpdatedAt = !('updatedAt' in data) || (data.updatedAt is number) || (data.updatedAt is timestamp);
+
+      return hasOnlyValidKeys &&
+             validRate &&
+             validTheme &&
+             validCurrency &&
+             validBudget &&
+             validUserName &&
+             validCloudSync &&
+             validFirebaseConfig &&
+             validUpdatedAt;
+    }
+
+    // ===============================================================
+    // Root Match Rules
+    // ===============================================================
+
+    // Default deny all access at root
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ===============================================================
+    // User Document & Subcollections
+    // ===============================================================
+
+    match /users/{userId} {
+      // User Profile document
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data, userId);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data, userId) &&
+                       isImmutableUnchanged('uid') && isImmutableUnchanged('createdAt');
+      allow delete: if isOwner(userId);
+
+      // 1. Wallets Subcollection
+      match /wallets/{walletId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidWallet(request.resource.data);
+        allow update: if isOwner(userId) && isValidWallet(request.resource.data) &&
+                         isImmutableUnchanged('id') && isImmutableUnchanged('createdAt');
+        allow delete: if isOwner(userId);
+      }
+
+      // 2. Categories Subcollection
+      match /categories/{categoryId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidCategory(request.resource.data);
+        allow update: if isOwner(userId) && isValidCategory(request.resource.data) &&
+                         isImmutableUnchanged('id') && isImmutableUnchanged('createdAt');
+        allow delete: if isOwner(userId);
+      }
+
+      // 3. Transactions Subcollection
+      match /transactions/{transactionId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidTransaction(request.resource.data);
+        allow update: if isOwner(userId) && isValidTransaction(request.resource.data) &&
+                         isImmutableUnchanged('id') && isImmutableUnchanged('createdAt');
+        allow delete: if isOwner(userId);
+      }
+
+      // 4. Settings Subcollection
+      match /settings/{settingId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSettings(request.resource.data);
+        allow update: if isOwner(userId) && isValidSettings(request.resource.data) &&
+                         isImmutableUnchanged('id') && isImmutableUnchanged('createdAt');
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}
