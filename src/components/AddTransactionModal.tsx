@@ -466,25 +466,64 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 })}
               </div>
 
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="Boshqa summa..."
-                  value={formattedDisplayAmount}
-                  onChange={(e) => handleAmountChange(e.target.value)}
-                  className="flex-1 text-xl font-black px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-                {(selectedWallet?.currency === 'USD' ? [1, 5] : [5000, 10000]).map((inc) => (
-                  <button
-                    key={inc}
-                    type="button"
-                    onClick={() => handleAmountChange((rawAmount + inc).toString())}
-                    className="px-2.5 py-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-emerald-500 hover:text-white transition-colors"
-                  >
-                    +{selectedWallet?.currency === 'USD' ? `$${inc}` : `${inc / 1000}k`}
-                  </button>
-                ))}
+              {/* Amount input & quick adjustment */}
+              <div className="pt-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0"
+                      value={formattedDisplayAmount}
+                      onChange={(e) => handleAmountChange(e.target.value)}
+                      className="w-full text-2xl font-black px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <span className="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400">
+                      {selectedWallet?.currency}
+                    </span>
+                  </div>
+
+                  {rawAmount >= 1000 && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleAmountChange(Math.max(0, rawAmount - (selectedWallet?.currency === 'USD' ? 1 : 1000)).toString())}
+                        className="px-2.5 py-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-rose-500 hover:text-white transition-colors"
+                        title="1 ming ayirish"
+                      >
+                        -1k
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAmountChange(Math.max(0, rawAmount - (selectedWallet?.currency === 'USD' ? 5 : 5000)).toString())}
+                        className="px-2.5 py-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-rose-500 hover:text-white transition-colors"
+                        title="5 ming ayirish"
+                      >
+                        -5k
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Ustiga qo'shish tugmalari (+1k, +2k, +5k, +10k, +20k, +50k) */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase mr-0.5 flex-shrink-0">
+                    Qo'shish:
+                  </span>
+                  {(selectedWallet?.currency === 'USD'
+                    ? [1, 2, 5, 10, 20]
+                    : [1000, 2000, 5000, 10000, 20000, 50000]
+                  ).map((inc) => (
+                    <button
+                      key={inc}
+                      type="button"
+                      onClick={() => handleAmountChange((rawAmount + inc).toString())}
+                      className="px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 hover:text-white text-emerald-700 dark:text-emerald-300 dark:bg-emerald-500/15 text-xs font-black transition-all active:scale-95 border border-emerald-500/25 whitespace-nowrap"
+                    >
+                      +{selectedWallet?.currency === 'USD' ? `$${inc}` : `${inc >= 1000 ? inc / 1000 : inc}k`}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
