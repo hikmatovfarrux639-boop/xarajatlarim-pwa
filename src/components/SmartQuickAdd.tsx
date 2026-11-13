@@ -161,10 +161,10 @@ export const SmartQuickAdd: React.FC<SmartQuickAddProps> = ({ onOpenFullModal })
   const [customItemMode, setCustomItemMode] = useState<boolean>(false);
   const [customItemText, setCustomItemText] = useState<string>('');
 
-  // Selected live amount state (Default 20,000 for meal)
-  const [selectedAmount, setSelectedAmount] = useState<number>(20000);
+  // Selected live amount state (starts at 0 — nothing pre-selected)
+  const [selectedAmount, setSelectedAmount] = useState<number>(0);
   const [isEditingAmountDirectly, setIsEditingAmountDirectly] = useState<boolean>(false);
-  const [manualAmountInput, setManualAmountInput] = useState<string>('20 000');
+  const [manualAmountInput, setManualAmountInput] = useState<string>('0');
 
   const [showTextInput, setShowTextInput] = useState<boolean>(false);
   const [input, setInput] = useState<string>('');
@@ -181,9 +181,8 @@ export const SmartQuickAdd: React.FC<SmartQuickAddProps> = ({ onOpenFullModal })
     setSelectedSubItem(scen.subItems[0]);
     setCustomItemMode(false);
     setCustomItemText('');
-    const baseAmt = activeWallet?.currency === 'USD' ? scen.amountsUsd[1] || 5 : scen.defaultAmountUzs;
-    setSelectedAmount(baseAmt);
-    setManualAmountInput(formatNumber(baseAmt));
+    setSelectedAmount(0);
+    setManualAmountInput('0');
   };
 
   // Click on a preset amount (e.g. 20k)
@@ -238,6 +237,8 @@ export const SmartQuickAdd: React.FC<SmartQuickAddProps> = ({ onOpenFullModal })
     });
 
     setLastAddedTx(created);
+    setSelectedAmount(0);
+    setManualAmountInput('0');
   };
 
   // Text input parser

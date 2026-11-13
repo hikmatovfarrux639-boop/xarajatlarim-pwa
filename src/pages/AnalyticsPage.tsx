@@ -69,6 +69,7 @@ export const AnalyticsPage: React.FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [productSearch, setProductSearch] = useState<string>('');
   const [confirmResetAll, setConfirmResetAll] = useState<boolean>(false);
+  const [showPreviewDemo, setShowPreviewDemo] = useState<boolean>(false);
 
   const toUzs = (amount: number, currency: 'UZS' | 'USD') => {
     return currency === 'USD' ? amount * settings.exchangeRateUsdToUzs : amount;
@@ -183,14 +184,61 @@ export const AnalyticsPage: React.FC = () => {
     };
   }, [period, customStart, customEnd, transactions]);
 
-  // Filter expense transactions in active range
-  const expenseTransactions = useMemo(() => {
+  // Temporary in-memory sample transactions ONLY when user clicks "Namuna ko'rish"
+  const previewDemoTransactions = useMemo<Transaction[]>(() => {
+    if (!showPreviewDemo) return [];
+    const now = new Date();
+    const samples = [
+      { daysAgo: 0, hour: 13, title: 'Tushlik', amount: 27000, categoryId: 'cat_cafe' },
+      { daysAgo: 0, hour: 9, title: 'Taksi', amount: 18000, categoryId: 'cat_transport' },
+      { daysAgo: 1, hour: 18, title: 'Bozorlik', amount: 95000, categoryId: 'cat_food' },
+      { daysAgo: 2, hour: 14, title: 'Osh', amount: 35000, categoryId: 'cat_cafe' },
+      { daysAgo: 3, hour: 11, title: 'Non va suv', amount: 12000, categoryId: 'cat_food' },
+      { daysAgo: 4, hour: 16, title: 'Internet', amount: 65000, categoryId: 'cat_phone' },
+      { daysAgo: 5, hour: 10, title: 'Dori-darmon', amount: 42000, categoryId: 'cat_health' },
+      { daysAgo: 6, hour: 20, title: 'Kechki ovqat', amount: 48000, categoryId: 'cat_cafe' },
+      { daysAgo: 7, hour: 12, title: 'Benzin / Metan', amount: 50000, categoryId: 'cat_transport' },
+      { daysAgo: 8, hour: 15, title: 'Qahva', amount: 20000, categoryId: 'cat_cafe' },
+      { daysAgo: 9, hour: 19, title: "Go'sht", amount: 95000, categoryId: 'cat_food' },
+    ];
+    return samples.map((s, idx) => {
+      const d = new Date(now);
+      d.setDate(d.getDate() - s.daysAgo);
+      d.setHours(s.hour, 15, 0, 0);
+      return {
+        id: `demo_${idx}`,
+        type: 'expense' as const,
+        amount: s.amount,
+        currency: 'UZS' as const,
+        walletId: 'wallet_card',
+        categoryId: s.categoryId,
+        title: s.title,
+        date: d.toISOString(),
+        createdAt: d.getTime(),
+      };
+    });
+  }, [showPreviewDemo]);
+
+  // Filter real or preview transactions in active range
+  const realExpenseTransactions = useMemo(() => {
     return transactions.filter((t) => {
       if (t.type !== 'expense') return false;
       const d = new Date(t.date);
       return d >= dateRange.start && d <= dateRange.end;
     });
   }, [transactions, dateRange]);
+
+  const expenseTransactions = useMemo(() => {
+    const source = showPreviewDemo && realExpenseTransactions.length === 0
+      ? previewDemoTransactions
+      : realExpenseTransactions;
+
+    return source.filter((t) => {
+      if (t.type !== 'expense') return false;
+      const d = new Date(t.date);
+      return d >= dateRange.start && d <= dateRange.end;
+    });
+  }, [showPreviewDemo, realExpenseTransactions, previewDemoTransactions, dateRange]);
 
   // Previous range total for comparison
   const prevTotalUzs = useMemo(() => {
@@ -496,6 +544,30 @@ export const AnalyticsPage: React.FC = () => {
             </div>
           </div>
         )}
+        {/* Empty state interactive demo preview toggle */}
+        {realExpenseTransactions.length === 0 && (
+          <div className="mt-2.5 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-200">
+              {showPreviewDemo
+                ? "Namuna ma'lumotlarda ko'ryapsiz (haqiqiy hisob 0)"
+                : "Hozircha xarajatlar 0 so'm. Grafiklarni sinab ko'rasizmi?"}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setShowPreviewDemo(!showPreviewDemo);
+                setSelectedCategoryId(null);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold flex-shrink-0 transition-all active:scale-95 ${
+                showPreviewDemo
+                  ? 'bg-rose-500 text-white'
+                  : 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25'
+              }`}
+            >
+              {showPreviewDemo ? '✕ Namunani yopish' : '👁️ Namuna grafikni ko‘rish'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Hero Summary Card with Metrics & Comparison */}
@@ -584,22 +656,21 @@ export const AnalyticsPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Interactive SVG Donut Chart (Always rendered!) */}
+        <InteractiveDonutChart
+          slices={categoryStats}
+          totalAmount={totalExpenseUzs}
+          selectedCategoryId={selectedCategoryId}
+          onSelectCategory={setSelectedCategoryId}
+        />
+
         {categoryStats.length === 0 ? (
-          <p className="text-xs text-center py-6 text-slate-400">
-            Ushbu davrda hech qanday xarajat yo'q (0 so'm)
+          <p className="text-xs text-center pt-1 pb-2 text-slate-400">
+            Xarajat qo'shsangiz, bo'limlar foizi va aylanasi avtomatik ranglanadi
           </p>
         ) : (
-          <>
-            {/* Interactive SVG Donut Chart */}
-            <InteractiveDonutChart
-              slices={categoryStats}
-              totalAmount={totalExpenseUzs}
-              selectedCategoryId={selectedCategoryId}
-              onSelectCategory={setSelectedCategoryId}
-            />
-
-            {/* Interactive Expandable Category List */}
-            <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+          /* Interactive Expandable Category List */
+          <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
               {categoryStats.map((cat) => {
                 const isSelected = selectedCategoryId === cat.id;
                 return (
@@ -697,7 +768,6 @@ export const AnalyticsPage: React.FC = () => {
                 );
               })}
             </div>
-          </>
         )}
       </div>
 

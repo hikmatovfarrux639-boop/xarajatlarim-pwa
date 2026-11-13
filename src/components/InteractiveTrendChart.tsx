@@ -118,88 +118,87 @@ export const InteractiveTrendChart: React.FC<InteractiveTrendChartProps> = ({
         )
       )}
 
-      {/* Bars Area */}
-      {totalAmount === 0 ? (
-        <div className="py-8 text-center text-xs text-slate-400">
-          Ushbu davrda grafik chizish uchun xarajat yo'q
-        </div>
-      ) : (
-        <div className={needsScroll ? 'overflow-x-auto pb-2 no-scrollbar' : ''}>
-          <div
-            className="relative pt-6 pb-1"
-            style={{
-              minWidth: needsScroll ? `${buckets.length * 36}px` : '100%',
-            }}
-          >
-            {/* Average Reference Line */}
-            {averageLinePercent > 5 && averageLinePercent < 95 && (
-              <div
-                className="absolute left-0 right-0 border-t border-dashed border-emerald-500/50 pointer-events-none z-0 flex justify-end"
-                style={{
-                  bottom: `calc(${averageLinePercent * 1.25}px + 24px)`,
-                }}
-              >
-                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-white/90 dark:bg-[#111827]/90 px-1 -mt-2 rounded">
-                  o'rtacha
-                </span>
-              </div>
-            )}
-
-            <div className="flex items-end justify-between gap-1.5 h-[135px] relative z-10">
-              {buckets.map((b) => {
-                const heightPct = maxAmount > 0 ? (b.amount / maxAmount) * 100 : 0;
-                const barHeightPx = b.amount > 0 ? Math.max(8, Math.round((heightPct / 100) * 125)) : 3;
-                const isSelected = selectedKey === b.key;
-                const isAboveAvg = b.amount > averageAmount && averageAmount > 0;
-
-                return (
-                  <button
-                    key={b.key}
-                    type="button"
-                    onClick={() => setSelectedKey(isSelected ? null : b.key)}
-                    className="flex-1 min-w-[26px] flex flex-col items-center justify-end h-full group focus:outline-none"
-                  >
-                    {/* Value above bar */}
-                    <span
-                      className={`text-[9px] font-extrabold mb-1 transition-colors ${
-                        isSelected
-                          ? 'text-blue-500 scale-110'
-                          : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
-                      }`}
-                    >
-                      {formatCompact(b.amount)}
-                    </span>
-
-                    {/* Bar */}
-                    <div
-                      className={`w-full max-w-[28px] rounded-t-xl transition-all duration-300 ${
-                        b.amount === 0
-                          ? 'bg-slate-100 dark:bg-slate-800/70'
-                          : isSelected
-                          ? 'bg-gradient-to-t from-blue-600 to-cyan-400 shadow-md shadow-blue-500/30 ring-2 ring-blue-400/50'
-                          : isAboveAvg
-                          ? 'bg-gradient-to-t from-rose-500 to-amber-400 group-hover:opacity-90'
-                          : 'bg-gradient-to-t from-emerald-500 to-teal-400 group-hover:opacity-90'
-                      }`}
-                      style={{ height: `${barHeightPx}px` }}
-                    />
-
-                    {/* X-axis label */}
-                    <span
-                      className={`text-[10px] mt-1.5 font-semibold truncate max-w-full ${
-                        isSelected
-                          ? 'text-blue-600 dark:text-blue-400 font-black'
-                          : 'text-slate-400'
-                      }`}
-                    >
-                      {b.shortLabel}
-                    </span>
-                  </button>
-                );
-              })}
+      {/* Bars Area - Always visible so user sees the timeline */}
+      <div className={needsScroll ? 'overflow-x-auto pb-2 no-scrollbar' : ''}>
+        <div
+          className="relative pt-6 pb-1"
+          style={{
+            minWidth: needsScroll ? `${buckets.length * 36}px` : '100%',
+          }}
+        >
+          {/* Average Reference Line */}
+          {totalAmount > 0 && averageLinePercent > 5 && averageLinePercent < 95 && (
+            <div
+              className="absolute left-0 right-0 border-t border-dashed border-emerald-500/50 pointer-events-none z-0 flex justify-end"
+              style={{
+                bottom: `calc(${averageLinePercent * 1.25}px + 24px)`,
+              }}
+            >
+              <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-white/90 dark:bg-[#111827]/90 px-1 -mt-2 rounded">
+                o'rtacha
+              </span>
             </div>
+          )}
+
+          <div className="flex items-end justify-between gap-1.5 h-[135px] relative z-10">
+            {buckets.map((b) => {
+              const heightPct = totalAmount > 0 && maxAmount > 0 ? (b.amount / maxAmount) * 100 : 0;
+              const barHeightPx = b.amount > 0 ? Math.max(8, Math.round((heightPct / 100) * 125)) : 4;
+              const isSelected = selectedKey === b.key;
+              const isAboveAvg = b.amount > averageAmount && averageAmount > 0;
+
+              return (
+                <button
+                  key={b.key}
+                  type="button"
+                  onClick={() => setSelectedKey(isSelected ? null : b.key)}
+                  className="flex-1 min-w-[26px] flex flex-col items-center justify-end h-full group focus:outline-none"
+                >
+                  {/* Value above bar */}
+                  <span
+                    className={`text-[9px] font-extrabold mb-1 transition-colors ${
+                      isSelected
+                        ? 'text-blue-500 scale-110'
+                        : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+                    }`}
+                  >
+                    {formatCompact(b.amount)}
+                  </span>
+
+                  {/* Bar */}
+                  <div
+                    className={`w-full max-w-[28px] rounded-t-xl transition-all duration-300 ${
+                      b.amount === 0
+                        ? 'bg-slate-100 dark:bg-slate-800/70'
+                        : isSelected
+                        ? 'bg-gradient-to-t from-blue-600 to-cyan-400 shadow-md shadow-blue-500/30 ring-2 ring-blue-400/50'
+                        : isAboveAvg
+                        ? 'bg-gradient-to-t from-rose-500 to-amber-400 group-hover:opacity-90'
+                        : 'bg-gradient-to-t from-emerald-500 to-teal-400 group-hover:opacity-90'
+                    }`}
+                    style={{ height: `${barHeightPx}px` }}
+                  />
+
+                  {/* X-axis label */}
+                  <span
+                    className={`text-[10px] mt-1.5 font-semibold truncate max-w-full ${
+                      isSelected
+                        ? 'text-blue-600 dark:text-blue-400 font-black'
+                        : 'text-slate-400'
+                    }`}
+                  >
+                    {b.shortLabel}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
+      </div>
+      {totalAmount === 0 && (
+        <p className="text-[11px] text-center text-slate-400 pt-1">
+          Hozircha xarajat kiritilmagan (0 so'm) — ustunlar avtomatik to'ladi
+        </p>
       )}
     </div>
   );

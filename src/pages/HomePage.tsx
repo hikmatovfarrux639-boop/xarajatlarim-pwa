@@ -68,9 +68,9 @@ export const HomePage: React.FC<HomePageProps> = ({
             </span>
             <button
               onClick={() => onNavigateTab('analytics')}
-              className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 font-semibold flex items-center gap-0.5 transition-colors"
+              className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 font-bold flex items-center gap-0.5 transition-colors"
             >
-              Statistika <ChevronRight size={12} />
+              Grafik & Tahlil <ChevronRight size={12} />
             </button>
           </div>
 
@@ -80,26 +80,38 @@ export const HomePage: React.FC<HomePageProps> = ({
 
           {/* Yesterday, Week, Month comparison pills */}
           <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/10">
-            <div className="bg-white/5 rounded-2xl p-2.5">
+            <button
+              type="button"
+              onClick={() => onNavigateTab('analytics')}
+              className="bg-white/5 hover:bg-white/10 rounded-2xl p-2.5 text-left transition-colors"
+            >
               <span className="text-[10px] text-slate-400 block">Kecha</span>
               <span className="text-xs font-bold text-slate-100 truncate block mt-0.5">
                 {formatCurrency(yesterdaySpentUzs, 'UZS')}
               </span>
-            </div>
+            </button>
 
-            <div className="bg-white/5 rounded-2xl p-2.5">
+            <button
+              type="button"
+              onClick={() => onNavigateTab('analytics')}
+              className="bg-white/5 hover:bg-white/10 rounded-2xl p-2.5 text-left transition-colors"
+            >
               <span className="text-[10px] text-slate-400 block">Oxirgi 7 kun</span>
               <span className="text-xs font-bold text-slate-100 truncate block mt-0.5">
                 {formatCurrency(thisWeekSpentUzs, 'UZS')}
               </span>
-            </div>
+            </button>
 
-            <div className="bg-white/5 rounded-2xl p-2.5">
+            <button
+              type="button"
+              onClick={() => onNavigateTab('analytics')}
+              className="bg-white/5 hover:bg-white/10 rounded-2xl p-2.5 text-left transition-colors"
+            >
               <span className="text-[10px] text-slate-400 block">Shu oy jami</span>
               <span className="text-xs font-bold text-emerald-300 truncate block mt-0.5">
                 {formatCurrency(thisMonthSpentUzs, 'UZS')}
               </span>
-            </div>
+            </button>
           </div>
         </div>
 
