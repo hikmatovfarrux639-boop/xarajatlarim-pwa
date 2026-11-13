@@ -68,7 +68,7 @@ export const AnalyticsPage: React.FC = () => {
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [productSearch, setProductSearch] = useState<string>('');
-  const [confirmResetAll, setConfirmResetAll] = useState<boolean>(false);
+  const [confirmClearMode, setConfirmClearMode] = useState<'today' | 'all' | null>(null);
   const [showPreviewDemo, setShowPreviewDemo] = useState<boolean>(false);
 
   const toUzs = (amount: number, currency: 'UZS' | 'USD') => {
@@ -853,24 +853,30 @@ export const AnalyticsPage: React.FC = () => {
           Tahlil va tarixdagi barcha xarajatlarni o'chirib, hisobni 0 dan boshlash:
         </p>
 
-        {confirmResetAll ? (
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30">
+        {confirmClearMode !== null ? (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 animate-in fade-in duration-150">
             <span className="text-xs font-bold text-rose-600 dark:text-rose-300">
-              Rostdan ham barcha xarajatlarni o'chirasizmi?
+              {confirmClearMode === 'today'
+                ? "Bugungi xarajatlarni o'chirishni tasdiqlaysizmi?"
+                : "Barcha xarajatlarni o'chirib 0 qilishni tasdiqlaysizmi?"}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end gap-2 flex-shrink-0">
               <button
                 type="button"
-                onClick={() => setConfirmResetAll(false)}
-                className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold"
+                onClick={() => setConfirmClearMode(null)}
+                className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold border border-slate-200 dark:border-slate-700"
               >
                 Yo'q
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  resetAllToZero();
-                  setConfirmResetAll(false);
+                  if (confirmClearMode === 'today') {
+                    clearTodayTransactions();
+                  } else {
+                    resetAllToZero();
+                  }
+                  setConfirmClearMode(null);
                 }}
                 className="px-3.5 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold flex items-center gap-1 shadow-sm"
               >
@@ -882,7 +888,7 @@ export const AnalyticsPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={clearTodayTransactions}
+              onClick={() => setConfirmClearMode('today')}
               disabled={transactions.length === 0}
               className="py-2.5 px-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-500/15 hover:text-rose-500 disabled:opacity-40 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
             >
@@ -891,7 +897,7 @@ export const AnalyticsPage: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => setConfirmResetAll(true)}
+              onClick={() => setConfirmClearMode('all')}
               disabled={transactions.length === 0}
               className="py-2.5 px-3 rounded-2xl bg-rose-500 hover:bg-rose-600 disabled:opacity-40 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm shadow-rose-500/20 transition-all active:scale-95"
             >

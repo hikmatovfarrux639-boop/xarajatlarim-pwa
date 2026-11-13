@@ -114,7 +114,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onEditTransaction }) =
             <div className="flex items-center gap-2 min-w-0">
               <Trash2 size={16} className="text-rose-500 flex-shrink-0" />
               <span className="text-xs font-bold text-rose-700 dark:text-rose-300 truncate">
-                Xarajatlarni o'chirib tashlaysizmi?
+                {confirmClearAll
+                  ? "Barchasini o'chirishni tasdiqlaysizmi?"
+                  : "Xarajatlarni o'chirib tashlaysizmi?"}
               </span>
             </div>
 
@@ -296,41 +298,62 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onEditTransaction }) =
                         )}
 
                         <div className="flex items-center justify-end gap-2 pt-1">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditTransaction(tx);
-                            }}
-                            className="text-xs text-slate-600 dark:text-slate-300 hover:text-emerald-500 flex items-center gap-1 font-semibold px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800"
-                          >
-                            <Pencil size={13} /> Tahrirlash
-                          </button>
-
                           {confirmDeleteId === tx.id ? (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteTransaction(tx.id);
-                                setExpandedTxId(null);
-                                setConfirmDeleteId(null);
-                              }}
-                              className="text-xs bg-rose-500 text-white flex items-center gap-1 font-bold px-3 py-1.5 rounded-lg shadow-sm"
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-full flex items-center justify-between gap-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 animate-in fade-in duration-150"
                             >
-                              Ha, o'chirilsin!
-                            </button>
+                              <span className="text-[11px] font-bold text-rose-600 dark:text-rose-300">
+                                O'chirishni tasdiqlaysizmi?
+                              </span>
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setConfirmDeleteId(null);
+                                  }}
+                                  className="text-[11px] px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-700"
+                                >
+                                  Yo'q
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteTransaction(tx.id);
+                                    setExpandedTxId(null);
+                                    setConfirmDeleteId(null);
+                                  }}
+                                  className="text-[11px] bg-rose-500 hover:bg-rose-600 text-white flex items-center gap-1 font-bold px-2.5 py-1 rounded-lg shadow-sm"
+                                >
+                                  <Check size={12} /> Ha, o'chirilsin
+                                </button>
+                              </div>
+                            </div>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmDeleteId(tx.id);
-                              }}
-                              className="text-xs text-rose-500 hover:text-rose-700 flex items-center gap-1 font-semibold px-2.5 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/30"
-                            >
-                              <Trash2 size={13} /> O'chirish
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEditTransaction(tx);
+                                }}
+                                className="text-xs text-slate-600 dark:text-slate-300 hover:text-emerald-500 flex items-center gap-1 font-semibold px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800"
+                              >
+                                <Pencil size={13} /> Tahrirlash
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmDeleteId(tx.id);
+                                }}
+                                className="text-xs text-rose-500 hover:text-rose-700 flex items-center gap-1 font-semibold px-2.5 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/30"
+                              >
+                                <Trash2 size={13} /> O'chirish
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>

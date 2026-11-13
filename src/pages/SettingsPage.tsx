@@ -41,6 +41,7 @@ export const SettingsPage: React.FC = () => {
   const [showAddCategory, setShowAddCategory] = useState<boolean>(false);
   const [catName, setCatName] = useState<string>('');
   const [catColor, setCatColor] = useState<string>('#10b981');
+  const [confirmDeleteCatId, setConfirmDeleteCatId] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState<boolean>(false);
 
   const handleSaveRate = (e: React.FormEvent) => {
@@ -255,13 +256,36 @@ export const SettingsPage: React.FC = () => {
                 </span>
               </div>
               {c.isCustom && (
-                <button
-                  type="button"
-                  onClick={() => deleteCategory(c.id)}
-                  className="text-slate-400 hover:text-rose-500 flex-shrink-0"
-                >
-                  <X size={13} />
-                </button>
+                confirmDeleteCatId === c.id ? (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteCatId(null)}
+                      className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold"
+                    >
+                      Yo'q
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        deleteCategory(c.id);
+                        setConfirmDeleteCatId(null);
+                      }}
+                      className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500 text-white font-bold"
+                    >
+                      Ha
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteCatId(c.id)}
+                    className="text-slate-400 hover:text-rose-500 flex-shrink-0"
+                    title="O'chirish"
+                  >
+                    <X size={13} />
+                  </button>
+                )
               )}
             </div>
           ))}
@@ -333,22 +357,27 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         {confirmReset ? (
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setConfirmReset(false)}
-              className="px-2.5 py-1.5 rounded-xl text-xs text-slate-500 bg-slate-100 dark:bg-slate-800"
-            >
-              Bekor
-            </button>
-            <button
-              onClick={() => {
-                resetAllToZero();
-                setConfirmReset(false);
-              }}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500 text-white"
-            >
-              Ha, 0 bo'lsin!
-            </button>
+          <div className="flex flex-col items-end gap-1.5">
+            <span className="text-[11px] font-bold text-rose-500">
+              Tasdiqlaysizmi?
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setConfirmReset(false)}
+                className="px-2.5 py-1.5 rounded-xl text-xs text-slate-500 bg-slate-100 dark:bg-slate-800"
+              >
+                Yo'q
+              </button>
+              <button
+                onClick={() => {
+                  resetAllToZero();
+                  setConfirmReset(false);
+                }}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500 text-white"
+              >
+                Ha, o'chirilsin!
+              </button>
+            </div>
           </div>
         ) : (
           <button

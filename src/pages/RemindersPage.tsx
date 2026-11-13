@@ -46,6 +46,7 @@ export const RemindersPage: React.FC = () => {
   const [isRecurringMonthly, setIsRecurringMonthly] = useState<boolean>(true);
   const [notifyDaysBefore, setNotifyDaysBefore] = useState<number>(1);
   const [paidFeedback, setPaidFeedback] = useState<string | null>(null);
+  const [confirmDeletePlanId, setConfirmDeletePlanId] = useState<string | null>(null);
   const [notifPermission, setNotifPermission] = useState<string>(
     typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
   );
@@ -431,23 +432,50 @@ export const RemindersPage: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => deletePlannedPayment(plan.id)}
-                      title="O'chirish"
-                      className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    {confirmDeletePlanId === plan.id ? (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/30 animate-in fade-in duration-150">
+                        <span className="text-[11px] font-bold text-rose-600 dark:text-rose-300">
+                          Tasdiqlaysizmi?
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeletePlanId(null)}
+                          className="text-[11px] px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold"
+                        >
+                          Yo'q
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            deletePlannedPayment(plan.id);
+                            setConfirmDeletePlanId(null);
+                          }}
+                          className="text-[11px] px-2 py-0.5 rounded-lg bg-rose-500 text-white font-bold"
+                        >
+                          Ha
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeletePlanId(plan.id)}
+                          title="O'chirish"
+                          className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                        >
+                          <Trash2 size={15} />
+                        </button>
 
-                    <button
-                      type="button"
-                      onClick={() => handlePayNow(plan)}
-                      className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-sm shadow-emerald-500/20 flex items-center gap-1.5 active:scale-95 transition-all"
-                    >
-                      <Check size={14} className="stroke-[3]" />
-                      <span>To'ladim</span>
-                    </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePayNow(plan)}
+                          className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-sm shadow-emerald-500/20 flex items-center gap-1.5 active:scale-95 transition-all"
+                        >
+                          <Check size={14} className="stroke-[3]" />
+                          <span>To'ladim</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
