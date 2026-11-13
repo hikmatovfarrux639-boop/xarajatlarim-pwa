@@ -264,8 +264,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onEditTransaction }) =
                       </div>
 
                       <div className="text-right pl-2 flex-shrink-0">
-                        <span className="text-xs font-bold block text-rose-500">
-                          -{formatCurrency(tx.amount, tx.currency)}
+                        <span className="text-xs font-extrabold block text-slate-900 dark:text-white">
+                          {formatCurrency(tx.amount, tx.currency)}
                         </span>
                         <span className="text-[10px] text-slate-400">
                           {cat?.name}

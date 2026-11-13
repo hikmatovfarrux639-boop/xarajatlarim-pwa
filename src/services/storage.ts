@@ -38,13 +38,13 @@ export const DEFAULT_WALLETS: Wallet[] = [
 ];
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'cat_cafe', name: 'Kafe & Tushlik', type: 'expense', icon: 'utensils', color: '#ef4444' },
-  { id: 'cat_food', name: 'Oziq-ovqat & Bozorlik', type: 'expense', icon: 'shopping-cart', color: '#f59e0b' },
-  { id: 'cat_transport', name: "Transport & Yo'l kira", type: 'expense', icon: 'car', color: '#3b82f6' },
-  { id: 'cat_home', name: 'Uy & Kommunal', type: 'expense', icon: 'home', color: '#8b5cf6' },
+  { id: 'cat_cafe', name: 'Kafe & Tushlik', type: 'expense', icon: 'utensils', color: '#f59e0b' },
+  { id: 'cat_food', name: 'Oziq-ovqat & Bozorlik', type: 'expense', icon: 'shopping-cart', color: '#10b981' },
+  { id: 'cat_transport', name: "Transport & Yo'l kira", type: 'expense', icon: 'car', color: '#0ea5e9' },
+  { id: 'cat_home', name: 'Uy & Kommunal', type: 'expense', icon: 'home', color: '#6366f1' },
   { id: 'cat_phone', name: 'Aloqa & Internet', type: 'expense', icon: 'smartphone', color: '#06b6d4' },
-  { id: 'cat_health', name: 'Salomatlik & Dorixona', type: 'expense', icon: 'heart-pulse', color: '#ec4899' },
-  { id: 'cat_clothes', name: 'Kiyim-kechak', type: 'expense', icon: 'shirt', color: '#14b8a6' },
+  { id: 'cat_health', name: 'Salomatlik & Dorixona', type: 'expense', icon: 'heart-pulse', color: '#14b8a6' },
+  { id: 'cat_clothes', name: 'Kiyim-kechak', type: 'expense', icon: 'shirt', color: '#8b5cf6' },
   { id: 'cat_entertainment', name: "Ko'ngilochar", type: 'expense', icon: 'film', color: '#a855f7' },
   { id: 'cat_other_exp', name: 'Boshqa xarajat', type: 'expense', icon: 'more-horizontal', color: '#64748b' },
 ];
@@ -94,7 +94,15 @@ export const storage = {
   getCategories(): Category[] {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
-      return data ? JSON.parse(data) : DEFAULT_CATEGORIES;
+      if (!data) return DEFAULT_CATEGORIES;
+      const parsed: Category[] = JSON.parse(data);
+      // Replace harsh red colors on food/health categories with calm human-friendly palette
+      return parsed.map((c) => {
+        if (c.id === 'cat_cafe' && c.color === '#ef4444') return { ...c, color: '#f59e0b' };
+        if (c.id === 'cat_food' && c.color === '#f59e0b') return { ...c, color: '#10b981' };
+        if (c.id === 'cat_health' && c.color === '#ec4899') return { ...c, color: '#14b8a6' };
+        return c;
+      });
     } catch {
       return DEFAULT_CATEGORIES;
     }

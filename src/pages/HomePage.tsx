@@ -64,7 +64,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="relative z-10">
           <div className="flex items-center justify-between text-emerald-300 mb-1.5">
             <span className="text-xs font-bold tracking-wider uppercase flex items-center gap-1.5">
-              <Flame size={15} className="text-rose-400 fill-rose-400" /> Bugungi Xarajat ({todayLabel})
+              <Flame size={15} className="text-amber-400 fill-amber-400" /> Bugungi Xarajat ({todayLabel})
             </span>
             <button
               onClick={() => onNavigateTab('analytics')}
@@ -272,8 +272,8 @@ export const HomePage: React.FC<HomePageProps> = ({
                     </div>
 
                     <div className="text-right pl-2 flex-shrink-0">
-                      <span className="text-sm font-bold block text-rose-500">
-                        -{formatCurrency(tx.amount, tx.currency)}
+                      <span className="text-sm font-extrabold block text-slate-900 dark:text-white">
+                        {formatCurrency(tx.amount, tx.currency)}
                       </span>
                     </div>
                   </div>
